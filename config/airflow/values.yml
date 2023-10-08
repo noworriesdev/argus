@@ -1,0 +1,34 @@
+airflow:
+  dags:
+    path: "/opt/airflow/dags"
+    persistence:
+      enabled: true
+      accessMode: ReadWriteOnce
+      size: 1Gi
+
+scheduler:
+  extraVolumes:
+    - name: dags
+      hostPath: 
+        path: /mnt/dags
+  extraVolumeMounts:
+    - name: dags
+      mountPath: /opt/airflow/dags
+
+web:
+  extraVolumes:
+    - name: dags
+      hostPath: 
+        path: /mnt/dags
+  extraVolumeMounts:
+    - name: dags
+      mountPath: /opt/airflow/dags
+
+workers:
+  extraVolumes:
+    - name: dags
+      hostPath: 
+        path: /mnt/dags
+  extraVolumeMounts:
+    - name: dags
+      mountPath: /opt/airflow/dags
