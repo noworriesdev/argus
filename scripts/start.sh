@@ -23,7 +23,52 @@ eval $(minikube -p minikube docker-env)
 
 # Build the custom Airflow Docker image
 echo "Storing secrets in Kube..."
-bash ./scripts/generate_secrets.sh
+#!/bin/bash
+
+# Ensure .env file exists
+if [[ ! -f .env ]]; then
+    echo "Error: .env file not found."
+    exit 1
+fi
+
+# Define secret name
+SECRET_NAME="argus-secrets"
+
+# Begin creating the secret.yaml file
+cat <<EOF > secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: $SECRET_NAME
+type: Opaque
+data:
+EOF
+
+# Read .env file and add keys and base64 encoded values to the secret.yaml
+while IFS='=' read -r key remaining || [[ -n "$key" ]]; do
+    # Ensure non-empty key
+    [ -z "$key" ] && continue
+    
+    # Skip commented lines
+    [[ $key == \#* ]] && continue
+    
+    # Extract and encode value
+    # NOTE: assuming that everything after the first '=' sign belongs to the value
+    value=$(echo -n "${remaining}" | base64 | tr -d '\n')
+    
+    # Add key and base64 encoded value to the secret.yaml
+    echo "  $key: $value" >> secret.yaml
+done < .env
+
+# Apply the secret.yaml using kubectl
+kubectl apply -f secret.yaml
+
+# Optional: Clean up the secret.yaml file
+rm -f secret.yaml
+
+
+# Optional: Clean up the secret.yaml file
+rm -f secret.yaml
 echo "Building Airflow Docker image..."
 docker build -t argus-airflow:latest ./docker/airflow
 
@@ -37,7 +82,21 @@ helm upgrade --install \
     --namespace argus \
     --create-namespace \
     --values ./config/airflow/values.yml \
-    my-airflow-release \
+    argus-airflow \
     apache-airflow/airflow
 
-echo "Airflow should now be deploying. Monitor the pods using: kubectl get pods --namespace airflow -w"
+echo "Airflow should now be deploying. Monitor the pods using: kubectl get pods --namespace argus -w"
+
+echo "Deploying Neo4j..."
+helm repo add neo4j https://helm.neo4j.com/neo4j
+helm repo update
+helm upgrade --install \
+    --namespace argus \
+    --create-namespace \
+    --values ./config/neo4j/values.yml \
+    argus-neo4j \
+    neo4j/neo4j
+sleep 2
+kubectl port-forward svc/argus-airflow-webserver 8080:8080 --namespace argus 
+sleep 45
+kubectl port-forward svc/argus-neo4j tcp-bolt tcp-http tcp-https 

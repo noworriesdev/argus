@@ -5,7 +5,37 @@ airflow:
       enabled: true
       accessMode: ReadWriteOnce
       size: 1Gi
-
+extraEnv: |
+  - name: NEO4J_USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: argus-secrets
+        key: NEO4J_USERNAME
+  - name: NEO4J_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: argus-secrets
+        key: NEO4J_PASSWORD
+  - name: NEO4J_HOST
+    valueFrom:
+      secretKeyRef:
+        name: argus-secrets
+        key: NEO4J_HOST
+  - name: NEO4J_PORT
+    valueFrom:
+      secretKeyRef:
+        name: argus-secrets
+        key: NEO4J_PORT
+  - name: DISCORD_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: argus-secrets
+        key: DISCORD_TOKEN
+  - name: DISCORD_GUILD
+    valueFrom:
+      secretKeyRef:
+        name: argus-secrets
+        key: DISCORD_GUILD
 scheduler:
   extraVolumes:
     - name: dags
@@ -32,3 +62,10 @@ workers:
   extraVolumeMounts:
     - name: dags
       mountPath: /opt/airflow/dags
+images:
+  airflow:
+    repository: argus-airflow
+    tag: latest
+    # Specifying digest takes precedence over tag.
+    digest: ~
+    pullPolicy: IfNotPresent
