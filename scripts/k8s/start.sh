@@ -30,7 +30,7 @@ if [[ ! -f .env ]]; then
     echo "Error: .env file not found."
     exit 1
 fi
-
+# kubectl create namespace argus
 # Define secret name
 SECRET_NAME="argus-secrets"
 
@@ -40,6 +40,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: $SECRET_NAME
+  namespace: argus
 type: Opaque
 data:
 EOF
@@ -61,7 +62,7 @@ while IFS='=' read -r key remaining || [[ -n "$key" ]]; do
 done < .env
 
 # Apply the secret.yaml using kubectl
-kubectl apply -f secret.yaml
+kubectl apply -f secret.yaml --namespace argus
 
 # Optional: Clean up the secret.yaml file
 rm -f secret.yaml

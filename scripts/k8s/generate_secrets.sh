@@ -31,7 +31,7 @@ while IFS='=' read -r key value || [[ -n "$key" ]]; do
 done < .env
 
 # Apply the secret.yaml using kubectl
-kubectl apply -f secret.yaml
+kubectl apply -f secret.yaml --namespace argus
 
 # Optional: Clean up the secret.yaml file
 rm -f secret.yaml

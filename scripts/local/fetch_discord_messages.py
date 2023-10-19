@@ -1,10 +1,3 @@
-from airflow import DAG
-from airflow.operators.python_operator import PythonVirtualenvOperator
-from datetime import datetime
-import os
-import time
-
-
 def fetch_discord_messages():
     import discord
     from discord.ext import commands
@@ -48,14 +41,17 @@ def fetch_discord_messages():
                             "timestamp": message.created_at.isoformat(),
                         }
                     )
+                    print(channel.name + " " + str(message.created_at.isoformat()))
                 channel_messages[channel.id]["messages"].extend(messages_list)
                 if not messages_list:
                     break
                 last_message_id = messages_list[-1]["id"]
 
     async def fetch_messages():
-        TOKEN = os.getenv("DISCORD_TOKEN")
-        GUILD_ID = os.getenv("DISCORD_GUILD")  # use your actual guild ID
+        TOKEN = (
+            "MTE1OTI2NjE1NDM3MjY3NzY4Mg.GGpVCJ.z7o54bxjczdmJzaarr3TN26reP0_G69n5eUyZo"
+        )
+        GUILD_ID = 904432320025595904  # use your actual guild ID
 
         intents = discord.Intents.default()
         intents.messages = True
@@ -73,7 +69,7 @@ def fetch_discord_messages():
                 await bot.close()
                 return
 
-            semaphore = asyncio.Semaphore(5)  # Limit the parallel operations to 8
+            semaphore = asyncio.Semaphore(10)  # Limit the parallel operations to 8
             fetch_tasks = []
 
             for channel in guild.channels:
@@ -90,10 +86,12 @@ def fetch_discord_messages():
             # wait for all the tasks to complete
             await asyncio.gather(*fetch_tasks)
 
-            await bot.close()
-
-            with open("/tmp/discord_messages.json", "w") as f:
+            with open("/mnt/c/development/argus/discord_messages.json", "w+") as f:
+                print("dumping messages")
+                print(channel_messages)
                 json.dump(channel_messages, f)
+                f.close()
+            await bot.close()
 
         print("starting bot")
         try:
@@ -114,64 +112,59 @@ def load_messages_to_neo4j():
     neo4j_host = os.getenv("NEO4J_HOST")
     neo4j_port = os.getenv("NEO4J_PORT")
 
-    uri = f"bolt://{neo4j_host}:{neo4j_port}"
+    uri = f"bolt://localhost:7687"
     driver = GraphDatabase.driver(uri, auth=(neo4j_username, neo4j_password))
 
-    with open("/tmp/discord_messages.json", "r") as f:
+    with open("./discord_messages.json", "r") as f:
         channel_messages = json.load(f)
 
-    with driver.session() as session:
-        for channel_id, channel_data in channel_messages.items():
+    for channel_id, channel_data in channel_messages.items():
+        with driver.session() as session:
             session.run(
                 ("MERGE (c:Channel {id: $id, name: $name})"),
                 id=channel_data["info"]["id"],
                 name=channel_data["info"]["name"],
             )
+            batch = []
+            total = len(channel_data["messages"])
+            batch_size = 100  # Set your preferred batch size
 
-            for message in channel_data["messages"]:
-                session.run(
-                    (
-                        "MERGE (u:User {id: $author_id, name: $author_name}) "
-                        "MERGE (m:Message {id: $message_id, content: $content, timestamp: $timestamp}) "
-                        "MERGE (c:Channel {id: $channel_id}) "
-                        "MERGE (u)-[:SENT]->(m) "
-                        "MERGE (m)-[:CONTAINED_IN]->(c)"
-                    ),
-                    author_id=message["author_id"],
-                    author_name=message["author_name"],
-                    message_id=message["id"],
-                    content=message["content"],
-                    timestamp=message["timestamp"],
-                    channel_id=channel_id,
+            for i, message in enumerate(channel_data["messages"]):
+                print(f"loading message {i + 1} of {total}")
+                batch.append(
+                    {
+                        "author_id": message["author_id"],
+                        "author_name": message["author_name"],
+                        "message_id": message["id"],
+                        "content": message["content"],
+                        "timestamp": message["timestamp"],
+                        "channel_id": channel_id,
+                    }
                 )
 
-    driver.close()
+                # If batch is of the desired size or if it is the last message, run the transaction
+                if len(batch) == batch_size or i == total - 1:
+                    session.run(
+                        (
+                            "UNWIND $batch AS msg "
+                            "MERGE (u:User {id: msg.author_id, name: msg.author_name}) "
+                            "MERGE (m:Message {id: msg.message_id, content: msg.content, timestamp: msg.timestamp}) "
+                            "MERGE (c:Channel {id: msg.channel_id}) "
+                            "MERGE (u)-[:SENT]->(m) "
+                            "MERGE (m)-[:CONTAINED_IN]->(c)"
+                        ),
+                        {"batch": batch},
+                    )
+                    batch.clear()  # Clear the batch
+        driver.close()
 
 
-default_args = {
-    "owner": "airflow",
-    "start_date": datetime(2023, 1, 1),
-}
+if __name__ == "__main__":
+    # fetch_discord_messages()
+    load_messages_to_neo4j()
 
-dag = DAG(
-    "fetch_and_load_discord_messages",
-    default_args=default_args,
-    description="A DAG to fetch Discord messages and load them into a Neo4j database",
-    schedule_interval="@once",
-)
+    """
+    k means
+    db scan
 
-task1 = PythonVirtualenvOperator(
-    task_id="fetch_discord_messages",
-    python_callable=fetch_discord_messages,
-    dag=dag,
-    requirements=["discord.py"],
-)
-
-task2 = PythonVirtualenvOperator(
-    task_id="load_messages_to_neo4j",
-    python_callable=load_messages_to_neo4j,
-    dag=dag,
-    requirements=["neo4j"],
-)
-
-task1 >> task2
+    """

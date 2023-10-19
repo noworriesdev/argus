@@ -1,3 +1,7 @@
+local_data/k8s/*
+local_data/csvs/*
+local_data/training_data/*
+local_data/discord_json_dump/*
 .env
 # Byte-compiled / optimized / DLL files
 __pycache__/
