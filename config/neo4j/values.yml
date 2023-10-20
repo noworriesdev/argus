@@ -1,6 +1,7 @@
 # neo4j-values.yaml
 neo4j:
   name: argus-gdb
+  passwordFromSecret: "argus-secrets"
   resources:
     cpu: "4"
     memory: "4Gi"
@@ -17,8 +18,6 @@ volumes:
         - ReadWriteOnce
       requests:
         storage: 1Gi
-existingPasswordSecret: "argus-secrets"
-existingPasswordSecretKey: "NEO4J_PASSWORD"
 auth:
   enabled: true
 service:
