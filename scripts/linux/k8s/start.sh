@@ -1,44 +1,27 @@
 #!/bin/bash
+
 # Exit on error
 set -e
+
 # Ensure .env file exists
-if [[ ! -f .env ]]; then
-    echo "Error: .env file not found."
+if [[ ! -f ./.env ]]; then
+    echo ".env file not found." >&2
     exit 1
 fi
 
 # Declaring main variables
 namespace="argus"
 secrets_name="argus-secrets"
+directory_path="/Users/victoria/Development/argus"  # Modify this path accordingly
 
 # Create namespace if it doesn't exist
-./scripts/k8s/create_namespace.sh "$namespace"
+./scripts/linux/k8s/create_namespace.sh $namespace
 
 echo "Initial config on Minikube..."
-./scripts/k8s/minikube_setup.sh
+./scripts/linux/k8s/minikube_setup.sh $directory_path
 
 echo "Storing secrets in Kube..."
-./scripts/k8s/generate_secrets.sh "$namespace" "$secrets_name"
+./scripts/linux/k8s/generate_secrets.sh $namespace $secrets_name
 
 echo "Deploying Neo4j..."
-./scripts/k8s/deploy_and_load_neo4j.sh "$namespace"
-
-
-
-# echo "Building Airflow Docker image..."
-# docker build -t argus-airflow:latest ./docker/airflow
-
-# # Add the Apache Airflow Helm repository
-# helm repo add apache-airflow https://airflow.apache.org
-# helm repo update
-
-# # Install or Upgrade Airflow using Helm
-# echo "Deploying Airflow..."
-# helm upgrade --install \
-#     --namespace argus \
-#     --create-namespace \
-#     --values ./config/airflow/values.yml \
-#     argus-airflow \
-#     apache-airflow/airflow
-
-# echo "Airflow should now be deploying. Monitor the pods using: kubectl get pods --namespace argus -w"
+./scripts/linux/k8s/deploy_neo4j.sh $namespace $directory_path

@@ -1,9 +1,19 @@
-# Define secret name
+#!/bin/bash
+
+# Exit on error
+set -e
+
+# Check if namespace and secret_name arguments are provided
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 <namespace> <secret_name>"
+    exit 1
+fi
+
 NAMESPACE="$1"
 SECRET_NAME="$2"
 
 # Begin creating the secret.yaml file
-cat <<EOF > secret.yaml
+cat << EOF > secret.yaml
 apiVersion: v1
 kind: Secret
 metadata:
@@ -14,27 +24,24 @@ data:
 EOF
 
 # Read .env file and add keys and base64 encoded values to the secret.yaml
-while IFS='=' read -r key remaining || [[ -n "$key" ]]; do
+while IFS="=" read -r key value
+do
     # Ensure non-empty key
     [ -z "$key" ] && continue
-    
+
     # Skip commented lines
     [[ $key == \#* ]] && continue
-    
-    # Extract and encode value
-    # NOTE: assuming that everything after the first '=' sign belongs to the value
-    value=$(echo -n "${remaining}" | base64 | tr -d '\n')
-    
+
+    # Encode value
+    base64Value=$(echo -n "$value" | base64)
+
     # Add key and base64 encoded value to the secret.yaml
-    echo "  $key: $value" >> secret.yaml
+    echo "  $key: $base64Value" >> secret.yaml
+
 done < .env
 
 # Apply the secret.yaml using kubectl
-kubectl apply -f secret.yaml --namespace argus
-
-# Optional: Clean up the secret.yaml file
-rm -f secret.yaml
-
+kubectl apply -f secret.yaml --namespace $NAMESPACE
 
 # Optional: Clean up the secret.yaml file
 rm -f secret.yaml

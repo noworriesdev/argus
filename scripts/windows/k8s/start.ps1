@@ -6,11 +6,11 @@ if (-not (Test-Path .\.env)) {
     Write-Error ".env file not found."
     exit
 }
-
+source .env
 # Declaring main variables
 $namespace = "argus"
 $secrets_name = "argus-secrets"
-$directory_path="C:\development\argus"
+$directory_path=$ARGUS_DIR_PATH
 
 # Create namespace if it doesn't exist
 & '.\scripts\windows\k8s\create_namespace.ps1' $namespace
