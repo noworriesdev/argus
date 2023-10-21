@@ -27,3 +27,5 @@ persistentVolumes:
     enabled: true
     mountPath: /mnt/argus
     hostPath: /mnt/argus
+existingPasswordSecret: "argus-secrets"	
+existingPasswordSecretKey: "NEO4J_PASSWORD"

@@ -49,7 +49,7 @@ helm upgrade --install \
     "${namespace}-neo4j" neo4j/neo4j \
     --set neo4j.offlineMaintenanceModeEnabled=true
 
-sleep 5
+sleep 15
 
 echo "Copying files for import."
 kubectl cp "./$CSV_DIR" "$namespace/${namespace}-neo4j-0:/import/files-1"
