@@ -7,7 +7,7 @@ def fetch_discord_messages():
     import time
 
     async def fetch_channel_messages(channel, channel_messages, semaphore):
-        async with semaphore:  # acquire semaphore
+        async with semaphore:  
             channel_info = {
                 "id": channel.id,
                 "name": channel.name,

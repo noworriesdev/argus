@@ -6,11 +6,11 @@ if (-not (Test-Path .\.env)) {
     Write-Error ".env file not found."
     exit
 }
-source .env
+
 # Declaring main variables
 $namespace = "argus"
 $secrets_name = "argus-secrets"
-$directory_path=$ARGUS_DIR_PATH
+$directory_path="C:\development\argus"
 
 # Create namespace if it doesn't exist
 & '.\scripts\windows\k8s\create_namespace.ps1' $namespace
@@ -23,6 +23,8 @@ Write-Host "Storing secrets in Kube..."
 
 Write-Host "Deploying Neo4j..."
 & '.\scripts\windows\k8s\deploy_neo4j.ps1' $namespace $directory_path
+Write-Host "Deploying Postgres..."
+& '.\scripts\windows\k8s\deploy_postgres.ps1' $namespace $directory_path
 <#
 Write-Host "Building Airflow Docker image..."
 docker build -t argus-airflow:latest .\docker\airflow

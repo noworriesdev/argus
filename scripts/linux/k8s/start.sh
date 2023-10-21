@@ -12,7 +12,7 @@ fi
 # Declaring main variables
 namespace="argus"
 secrets_name="argus-secrets"
-directory_path="/Users/victoria/Development/argus"  # Modify this path accordingly
+directory_path="/mnt/c/development/argus"  # Modify this path accordingly
 
 # Create namespace if it doesn't exist
 ./scripts/linux/k8s/create_namespace.sh $namespace

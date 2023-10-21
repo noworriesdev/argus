@@ -67,4 +67,4 @@ if __name__ == "__main__":
             await message.channel.send(message_text.replace("@", "#"))
 
     # Run the bot with its token.
-    bot.run(os.getenv("DISCORD_TOKEN"))
+    bot.run(os.getenv("DISCORD_TOKEN_V"))

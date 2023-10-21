@@ -52,7 +52,7 @@ helm upgrade --install `
     $namespace-neo4j neo4j/neo4j `
     --set neo4j.offlineMaintenanceModeEnabled=true
 
-Start-Sleep -Seconds 5
+Start-Sleep -Seconds 30
 
 Write-Host "Copying files for import."
 kubectl cp ./local_data/csvs argus/argus-neo4j-0:/import/files-1
@@ -78,7 +78,7 @@ Write-Host "Deployment initiated. Monitoring status..."
 
 # Monitor pods until they are running
 do {
-    Start-Sleep -Seconds 10
+    Start-Sleep -Seconds 30
     Write-Host "Checking pod status..."
 } until (AllPodsRunning)
 
