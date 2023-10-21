@@ -3,6 +3,9 @@ from discord.ext import commands
 import openai
 import ipdb
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 """
 ft:gpt-3.5-turbo-0613:personal::8AQSKwfK is most up to date lucy
 ft:gpt-3.5-turbo-0613:personal::8ASv0N4p me

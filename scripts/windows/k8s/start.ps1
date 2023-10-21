@@ -22,9 +22,7 @@ Write-Host "Storing secrets in Kube..."
 & '.\scripts\windows\k8s\generate_secrets.ps1' $namespace $secrets_name
 
 Write-Host "Deploying Neo4j..."
-& '.\scripts\windows\k8s\deploy_neo4j.ps1' $namespace
-Write-Host "Loading data into Neo4j with admin import..."
-& ".\scripts\windows\k8s\load_neo4j.ps1" $directory_path
+& '.\scripts\windows\k8s\deploy_neo4j.ps1' $namespace $directory_path
 <#
 Write-Host "Building Airflow Docker image..."
 docker build -t argus-airflow:latest .\docker\airflow
