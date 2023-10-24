@@ -74,7 +74,7 @@ helm upgrade --install `
     --values .\config\neo4j\values.yml `
     $namespace-neo4j neo4j/neo4j
 
-Write-Host "Deployment initiated. Monitoring status..."
+Write-Host "Neo4j Deployment initiated. Monitoring status..."
 
 # Monitor pods until they are running
 do {
