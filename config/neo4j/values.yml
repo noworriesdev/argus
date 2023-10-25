@@ -1,19 +1,31 @@
 # neo4j-values.yaml
 neo4j:
   name: argus-gdb
+  passwordFromSecret: "argus-secrets"
   resources:
-    cpu: "0.5"
-    memory: "2Gi"
+    cpu: "4"
+    memory: "4Gi"
 volumes:
   data:
     mode: defaultStorageClass
     defaultStorageClass:
       requests:
         storage: 2Gi
-existingPasswordSecret: "argus-secrets"
-existingPasswordSecretKey: "NEO4J_PASSWORD"
+  import:
+    mode: defaultStorageClass
+    defaultStorageClass:
+      accessModes:
+        - ReadWriteOnce
+      requests:
+        storage: 1Gi
 auth:
   enabled: true
-  adminUser: neo4j  # This could be customized
-  adminPasswordSecret: "neo4j-secrets"
-  adminPasswordKey: "NEO4J_PASSWORD"
+service:
+  type: LoadBalancer
+persistentVolumes:
+  logs:
+    enabled: true
+    mountPath: /mnt/argus
+    hostPath: /mnt/argus
+existingPasswordSecret: "argus-secrets"	
+existingPasswordSecretKey: "NEO4J_PASSWORD"

@@ -5,9 +5,12 @@ def fetch_discord_messages():
     import json
     import os
     import time
+    import dotenv
 
+    from dotenv import load_dotenv
+    load_dotenv()
     async def fetch_channel_messages(channel, channel_messages, semaphore):
-        async with semaphore:  # acquire semaphore
+        async with semaphore:  
             channel_info = {
                 "id": channel.id,
                 "name": channel.name,
@@ -48,9 +51,7 @@ def fetch_discord_messages():
                 last_message_id = messages_list[-1]["id"]
 
     async def fetch_messages():
-        TOKEN = (
-            "MTE1OTI2NjE1NDM3MjY3NzY4Mg.GGpVCJ.z7o54bxjczdmJzaarr3TN26reP0_G69n5eUyZo"
-        )
+        TOKEN = os.getenv("DISCORD_TOKEN_V")
         GUILD_ID = 904432320025595904  # use your actual guild ID
 
         intents = discord.Intents.default()
@@ -160,8 +161,8 @@ def load_messages_to_neo4j():
 
 
 if __name__ == "__main__":
-    # fetch_discord_messages()
-    load_messages_to_neo4j()
+    fetch_discord_messages()
+    # load_messages_to_neo4j()
 
     """
     k means

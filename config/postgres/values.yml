@@ -1,0 +1,6 @@
+global:
+  postgresql:
+    auth:
+      existingSecret: "argus-secrets"
+      secretKeys:
+        adminPasswordKey: "POSTGRES_PASSWORD"

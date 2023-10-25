@@ -36,6 +36,11 @@ extraEnv: |
       secretKeyRef:
         name: argus-secrets
         key: DISCORD_GUILD
+  - name: POSTGRES_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: argus-secrets
+        key: POSTGRES_PASSWORD
 scheduler:
   extraVolumes:
     - name: dags
