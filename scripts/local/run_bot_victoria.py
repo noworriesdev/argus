@@ -18,7 +18,7 @@ def call_lucy_gpt(messages):
             model="ft:gpt-3.5-turbo-0613:personal::8ASv0N4p",
             messages=messages,
             max_tokens=100,
-            temperature=0.8,
+            temperature=.7,
         )
         # ipdb.set_trace()
 
@@ -37,11 +37,22 @@ if __name__ == "__main__":
 
     @bot.event
     async def on_message(message):
-        # Ignore messages from the bot itself
+        if "goon" in message.content.lower():
+            print('goon detected')
+            try:
+                # Send a DM to the author of the message
+                await message.author.send("stop it with awful word")
+            except discord.errors.Forbidden:
+                # If DMs are blocked, the bot will not be able to send the message
+                print(f"Could not send DM to {message.author.name}")
+            # Ignore messages from the bot itself
+        else:
+            print("no goon")
         if (
             message.author == bot.user
             or message.channel.id != 1159142635672449094
             or message.author.id == 1159266154372677682
+            or message.author.id == 1170009909081940100 
         ):
             print("wrong channel")
             return
@@ -49,7 +60,7 @@ if __name__ == "__main__":
         messages = [{"role": "system", "content": "You are Victoria Bot."}]
 
         async for entry in message.channel.history(
-            limit=25,
+            limit=5,
         ):
             message_text = entry.content
             author_id = entry.author.id

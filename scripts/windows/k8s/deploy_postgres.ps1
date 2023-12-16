@@ -14,6 +14,9 @@ function AllPodsRunning {
         -and $pods -notcontains "Unknown"
 }
 
+Write-Host "Building PostGres Docker image..."
+docker build -t argus-postgres:latest .\docker\postgres
+
 helm install argus-postgres oci://registry-1.docker.io/bitnamicharts/postgresql --set image.repository=argus-postgres,image.tag=latest,image.pullPolicy=IfNotPresent
 
 Write-Host "Deployment initiated. Monitoring status..."
@@ -30,27 +33,9 @@ Start-Sleep -s 15
 $encodedString = kubectl get secret --namespace argus argus-postgres-postgresql -o jsonpath="{.data.postgres-password}"
 $decodedBytes = [System.Convert]::FromBase64String($encodedString)
 $POSTGRES_PASSWORD = [System.Text.Encoding]::UTF8.GetString($decodedBytes)
-$env:POSTGRES_PASSWORD = $POSTGRES_PASSWORD
-# Begin creating the secret.yaml file
-@"
-apiVersion: v1
-kind: Secret
-metadata:
-  name: "${secretName}"
-  namespace: $NAMESPACE
-type: Opaque
-data:
-"@ | Out-File secret.yaml
 
-# Add POSTGRES_PASSWORD to the secret.yaml
-$base64Password = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($POSTGRES_PASSWORD))
-"  POSTGRES_PASSWORD: $base64Password" | Out-File secret.yaml -Append
-
-# Apply the secret.yaml using kubectl
-kubectl apply -f secret.yaml --namespace $NAMESPACE
 Write-Host "POSTGRES PASSWORD: ${POSTGRES_PASSWORD}"
-
-# Optional: Clean up the secret.yaml file
-Remove-Item secret.yaml -Force
-
-kubectl port-forward svc/$namespace-postgres-postgresql 5432:5432
+Start-Sleep -s 30
+Start-Job -ScriptBlock {
+    kubectl port-forward svc/$using:namespace-postgres-postgresql 5432:5432
+}

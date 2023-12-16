@@ -7,7 +7,4 @@ WORKDIR /usr/src/app
 
 # Copy the current directory contents into the container at /usr/src/app
 COPY requirements.txt .
-
-USER airflow
-RUN echo $(pwd)  # Will print "/usr/src/app"
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt

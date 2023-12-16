@@ -11,6 +11,7 @@ Write-Output "All 'kubectl port-forward' processes have been killed."
 
 helm uninstall argus-neo4j --namespace argus
 helm uninstall argus-postgres --namespace argus
+helm uninstall argus-airflow --namespace argus
 kubectl delete namespace argus
 minikube stop
 minikube start

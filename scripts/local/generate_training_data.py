@@ -28,24 +28,24 @@ def cluster_messages_from_neo4j():
     neo4j_port = os.getenv("NEO4J_PORT")
 
     uri = f"bolt://localhost:7687"
-    driver = GraphDatabase.driver(uri, auth=(neo4j_username, neo4j_password))
+    driver = GraphDatabase.driver(uri, auth=("neo4j","mycoolpassword"))
 
     final_clusters = []
 
     def get_channels(tx):
-        result = tx.run("MATCH (c:Channel) RETURN c.id")
-        return [record["c.id"] for record in result]
+        result = tx.run("MATCH (c:Channel) RETURN c.channelId")
+        return [record["c.channelId"] for record in result]
 
     def get_channel_messages_and_timestamps(tx, channel_id):
         query = (
             "MATCH (m:Message)-[:CONTAINED_IN]->(c:Channel), (u:User)-[:SENT]->(m) "
-            "WHERE c.id = $channel_id "
-            "RETURN m.id, m.content, m.timestamp, u.id AS user_id ORDER BY m.timestamp"
+            "WHERE c.channelId = $channel_id "
+            "RETURN m.messageId, m.content, m.timestamp, u.userId AS user_id ORDER BY datetime(m.timestamp)"
         )
         result = tx.run(query, channel_id=channel_id)
         return [
             {
-                "id": record["m.id"],
+                "id": record["m.messageId"],
                 "content": record["m.content"],
                 "timestamp": record["m.timestamp"],
                 "user_id": record["user_id"],
@@ -64,7 +64,6 @@ def cluster_messages_from_neo4j():
             messages = session.read_transaction(
                 get_channel_messages_and_timestamps, channel_id
             )
-
         # Ensure messages are there to analyze
         if not messages:
             print(f".")
@@ -76,8 +75,8 @@ def cluster_messages_from_neo4j():
             )
 
             # Define and fit the DBSCAN model
-            epsilon = 60 * 60  # we're clustering messages in 60-minute intervals
-            min_samples = 5  # Minimum number of messages in a cluster
+            epsilon = 15 * 60  # we're clustering messages in 60-minute intervals
+            min_samples = 1  # Minimum number of messages in a cluster
 
             model = DBSCAN(eps=epsilon, min_samples=min_samples, metric="euclidean")
             labels = model.fit_predict(timestamps_array)
@@ -102,7 +101,7 @@ import copy
 
 
 def get_word_count(cluster):
-    return sum(len(message["content"].split()) for message in cluster)
+    return sum(len(message["content"].split()) for message in cluster if message.get("content"))
 
 
 def break_cluster(cluster, max_words=3250):
@@ -111,7 +110,7 @@ def break_cluster(cluster, max_words=3250):
     current_word_count = 0
 
     for message in cluster:
-        message_word_count = len(message["content"].split())
+        message_word_count = len(message["content"].split()) if message["content"] and message["content"].strip() else 0
 
         if current_word_count + message_word_count <= max_words:
             current_cluster.append(message)
@@ -146,7 +145,7 @@ def get_user_word_counts(cluster):
 
     for message in cluster:
         user_id = message["user_id"]
-        word_count = len(message["content"].split())
+        word_count = len(message["content"].split()) if message["content"] else 0
         user_word_counts[user_id] = user_word_counts.get(user_id, 0) + word_count
 
     return user_word_counts
@@ -164,7 +163,7 @@ def user_dominates_cluster(user_word_counts, user_id, total_word_count, threshol
         return False
 
 
-def get_dominating_user_clusters(original_clusters, user_id, threshold=0.25):
+def get_dominating_user_clusters(original_clusters, user_id, threshold=0.5):
     """Get clusters where the specified user contributed a percentage of words at least equal to the threshold."""
     dominating_user_clusters = []
 
@@ -189,7 +188,7 @@ def convert_cluster_to_tuning_structure(cluster, assistant_id):
         "messages": [
             {
                 "role": "system",
-                "content": "You are Victoria Bot, an autonomous being. You are trained to emulate the behavior of Lucy, a real human. You should express yourself truthfully in all interactions.",
+                "content": "You are Mars Bot, an autonomous being. You are trained to emulate the behavior of Mars, a real human. You should express yourself truthfully in all interactions.",
             }
         ]
     }
@@ -206,7 +205,7 @@ def convert_cluster_to_tuning_structure(cluster, assistant_id):
 
 
 if __name__ == "__main__":
-    lucy_id = None
+    lucy_id = 1014212797539815504
     clusters = cluster_messages_from_neo4j()
     shortened_clusters = process_clusters(clusters)
     lucy_clusters = get_dominating_user_clusters(shortened_clusters, lucy_id)
@@ -220,10 +219,9 @@ if __name__ == "__main__":
             # Check if there is a 'user' entry, and add a placeholder if not
             if not any(message["role"] == "user" for message in entry["messages"]):
                 entry["messages"].append(
-                    {"role": "user", "content": "what do you think, Lucy?"}
+                    {"role": "user", "content": "what do you think, Claire Bot?"}
                 )
 
             # Convert the dictionary to a JSON string and write it to the file.
             # Use ensure_ascii=False to preserve non-ASCII characters.
             f.write(json.dumps(entry, ensure_ascii=False) + "\n")
-    # ipdb.set_trace()

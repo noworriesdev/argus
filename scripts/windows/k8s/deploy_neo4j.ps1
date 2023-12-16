@@ -60,9 +60,9 @@ kubectl cp ./local_data/csvs argus/argus-neo4j-0:/import/files-1
 Write-Host "Initiating import."
 kubectl exec -n argus argus-neo4j-0 `
     -- neo4j-admin database import full `
-    --nodes=/import/files-1/users.csv `
-    --nodes=/import/files-1/channels.csv `
-    --nodes=/import/files-1/messages.csv `
+    --nodes=User=/import/files-1/users.csv `
+    --nodes=Channel=/import/files-1/channels.csv `
+    --nodes=Message=/import/files-1/messages.csv `
     --relationships=/import/files-1/message_channel_rel.csv `
     --relationships=/import/files-1/user_message_rel.csv neo4j `
     --overwrite-destination `
@@ -87,4 +87,4 @@ Write-Host "All pods are now running."
 Start-Sleep -Seconds 5
 # Port forward with kubectl
 Start-Process -NoNewWindow kubectl `
-    -ArgumentList "port-forward svc/${namespace}-neo4j tcp-bolt tcp-http tcp-https"
+    -ArgumentList "port-forward svc/${namespace}-neo4j tcp-bolt tcp-http"

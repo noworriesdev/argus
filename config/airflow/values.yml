@@ -6,46 +6,41 @@ airflow:
       accessMode: ReadWriteOnce
       size: 1Gi
 extraEnv: |
-  - name: NEO4J_USERNAME
-    valueFrom:
-      secretKeyRef:
-        name: argus-secrets
-        key: NEO4J_USERNAME
   - name: NEO4J_PASSWORD
     valueFrom:
       secretKeyRef:
         name: argus-secrets
-        key: NEO4J_PASSWORD
+        key: "NEO4J_PASSWORD"
   - name: NEO4J_HOST
     valueFrom:
       secretKeyRef:
         name: argus-secrets
-        key: NEO4J_HOST
+        key: "NEO4J_HOST"
   - name: NEO4J_PORT
     valueFrom:
       secretKeyRef:
         name: argus-secrets
-        key: NEO4J_PORT
+        key: "NEO4J_PORT"
   - name: DISCORD_TOKEN
     valueFrom:
       secretKeyRef:
         name: argus-secrets
-        key: DISCORD_TOKEN
+        key: "DISCORD_TOKEN_V"
   - name: DISCORD_GUILD
     valueFrom:
       secretKeyRef:
         name: argus-secrets
-        key: DISCORD_GUILD
+        key: "DISCORD_GUILD"
   - name: POSTGRES_PASSWORD
     valueFrom:
       secretKeyRef:
-        name: argus-secrets
-        key: POSTGRES_PASSWORD
+        name: argus-postgres-postgresql
+        key: "postgres-password"
 scheduler:
   extraVolumes:
     - name: dags
       hostPath: 
-        path: /mnt/dags
+        path: /mnt/argus/dags
   extraVolumeMounts:
     - name: dags
       mountPath: /opt/airflow/dags
@@ -54,7 +49,7 @@ web:
   extraVolumes:
     - name: dags
       hostPath: 
-        path: /mnt/dags
+        path: /mnt/argus/dags
   extraVolumeMounts:
     - name: dags
       mountPath: /opt/airflow/dags
@@ -63,7 +58,7 @@ workers:
   extraVolumes:
     - name: dags
       hostPath: 
-        path: /mnt/dags
+        path: /mnt/argus/dags
   extraVolumeMounts:
     - name: dags
       mountPath: /opt/airflow/dags

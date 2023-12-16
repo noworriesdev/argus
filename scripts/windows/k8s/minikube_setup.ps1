@@ -1,5 +1,5 @@
 # Mount the directory to Minikube
-Start-Process -NoNewWindow minikube -ArgumentList "mount C:\development\argus\local_data:/mnt/argus"
+Start-Process -NoNewWindow minikube -ArgumentList "mount C:\development\argus:/mnt/argus"
 
 # Enable necessary Minikube addons
 minikube addons enable ingress

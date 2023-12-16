@@ -21,28 +21,11 @@ Write-Host "Initial config on Minikube..."
 Write-Host "Storing secrets in Kube..."
 & '.\scripts\windows\k8s\generate_secrets.ps1' $namespace $secrets_name
 
-# Write-Host "Deploying Neo4j..."
-# & '.\scripts\windows\k8s\deploy_neo4j.ps1' $namespace $directory_path
-Write-Host "Building PostGres Docker image..."
-docker build -t argus-postgres:latest .\docker\postgres
 Write-Host "Deploying Postgres..."
 & '.\scripts\windows\k8s\deploy_postgres.ps1' $namespace $directory_path $secrets_name
 
-Write-Host "Building Airflow Docker image..."
-docker build -t argus-airflow:latest .\docker\airflow
-
-# Add the Apache Airflow Helm repository
-helm repo add apache-airflow https://airflow.apache.org
-helm repo update
-
-# Install or Upgrade Airflow using Helm
 Write-Host "Deploying Airflow..."
-helm upgrade --install `
-    --namespace $namespace `
-    --create-namespace `
-    --values .\config\airflow\values.yml `
-    argus-airflow `
-    apache-airflow/airflow
+& '.\scripts\windows\k8s\deploy_airflow.ps1' $namespace $directory_path $secrets_name
 
-Write-Host "Airflow should now be deploying. Monitor the pods using: kubectl get pods --namespace $namespace -w"
-
+Write-Host "Deploying Neo4j..."
+& '.\scripts\windows\k8s\deploy_neo4j.ps1' $namespace $directory_path

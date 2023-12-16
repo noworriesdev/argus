@@ -1,3 +1,7 @@
 neo4j
 discord
 vaderSentiment
+pyodbc
+apache-airflow[postgres]
+python-dotenv
+psycopg2-binary

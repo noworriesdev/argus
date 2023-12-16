@@ -6,6 +6,7 @@ def fetch_discord_messages():
     import os
     import time
     import dotenv
+    import ipdb
 
     from dotenv import load_dotenv
     load_dotenv()
@@ -26,7 +27,6 @@ def fetch_discord_messages():
             printFirstTime = True
             while True:
                 if printFirstTime is True:
-                    print("we are retrieving " + channel.name)
                     printFirstTime = False
                 messages_list = []
                 async for message in channel.history(
@@ -34,7 +34,31 @@ def fetch_discord_messages():
                     before=discord.Object(id=last_message_id)
                     if last_message_id
                     else None,
-                ):
+                ):  
+                    print(message.id)
+                    parent = None
+                    if "reply" in message.type:
+                        parent = message.reference.message_id
+                    message_mentions = []
+                    message_reactions = {}
+                    if message.mentions:
+                        for mention in message.mentions:
+                            message_mentions.append(mention.id)
+                    if message.reactions:
+                        working_reactions = [
+                            reaction
+                            for reaction
+                            in message.reactions
+                        ]
+                        for reaction in working_reactions:
+                            users_list = []
+                            async for user in reaction.users():
+                                users_list.append(user.id)
+                            if isinstance(reaction.emoji, discord.Emoji) or isinstance(reaction.emoji, discord.PartialEmoji):
+                                name = reaction.emoji.name
+                                message_reactions[name] = users_list
+                            else:
+                                message_reactions[reaction.emoji] = users_list
                     messages_list.append(
                         {
                             "id": message.id,
@@ -42,9 +66,11 @@ def fetch_discord_messages():
                             "author_name": str(message.author),
                             "content": message.content,
                             "timestamp": message.created_at.isoformat(),
+                            "mentions": message_mentions,
+                            "reactions": message_reactions,
+                            "parent": parent
                         }
                     )
-                    print(channel.name + " " + str(message.created_at.isoformat()))
                 channel_messages[channel.id]["messages"].extend(messages_list)
                 if not messages_list:
                     break
@@ -70,7 +96,7 @@ def fetch_discord_messages():
                 await bot.close()
                 return
 
-            semaphore = asyncio.Semaphore(10)  # Limit the parallel operations to 8
+            semaphore = asyncio.Semaphore(8)
             fetch_tasks = []
 
             for channel in guild.channels:

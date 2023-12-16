@@ -1,7 +1,10 @@
 import os
 import openai
 import ipdb
+import dotenv
 
+from dotenv import load_dotenv
+load_dotenv()
 if __name__ == "__main__":
     openai.api_key = os.getenv("OPENAI_KEY")
     resp = openai.File.create(file=open("local_data/training_data/output.jsonl", "rb"), purpose="fine-tune")

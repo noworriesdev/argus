@@ -8,6 +8,7 @@ load_dotenv()
 """
 ft:gpt-3.5-turbo-0613:personal::8AQSKwfK is most up to date lucy
 ft:gpt-3.5-turbo-0613:personal::8ASv0N4p me
+ft:gpt-3.5-turbo-0613:personal::8KUlJPlm mars
 """
 
 
@@ -16,8 +17,8 @@ def call_lucy_gpt(messages):
         completion = openai.ChatCompletion.create(
             model="ft:gpt-3.5-turbo-0613:personal::8AQSKwfK",
             messages=messages,
-            max_tokens=100,
-            temperature=0.8,
+            max_tokens=200,
+            temperature=.7,
         )
         # ipdb.set_trace()
 
@@ -40,6 +41,7 @@ if __name__ == "__main__":
         if (
             message.author == bot.user
             or message.channel.id != 1159142635672449094
+            or message.author.id == 1170009909081940100
             or message.author.id == 1163665414052642897
         ):
             print("wrong channel")
@@ -48,7 +50,7 @@ if __name__ == "__main__":
         messages = [{"role": "system", "content": "You are Lucy Bot."}]
 
         async for entry in message.channel.history(
-            limit=25,
+            limit=5,
         ):
             message_text = entry.content
             author_id = entry.author.id
@@ -58,6 +60,7 @@ if __name__ == "__main__":
             else:
                 messages.append({"role": "user", "content": message_text})
         messages.reverse()
+        print(messages)
         # ipdb.set_trace()
         print("It's the right channel!")
         message_text = call_lucy_gpt(messages)
