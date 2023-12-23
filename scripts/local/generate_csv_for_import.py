@@ -10,10 +10,6 @@ def hash_to_uuid(user, message, reaction):
 
     return uuid.UUID(bytes=hash_bytes[:16])
 
-uuid_result = hash_to_uuid("string1", "string2", "🙂")
-print(uuid_result)
-
-
 def generate_csvs_from_json():
     from neo4j import GraphDatabase
     import json
@@ -43,6 +39,8 @@ def generate_csvs_from_json():
     message_mention_rel = []
     message_reaction_rel = []
     user_reaction_rel = []
+    message_reference_rel = []
+    count = 1
     for channel_id, channel_data in channel_messages.items():
         channels.append([channel_data["info"]["id"], channel_data["info"]["name"]])
 
@@ -50,10 +48,16 @@ def generate_csvs_from_json():
             # Add user if not already in the list
             if not any(u[0] == message["author_id"] for u in users):
                 users.append([message["author_id"], message["author_name"]])
-
+        for message in channel_data["messages"]:
             # Add message
             messages.append([message["id"], message["content"], message["timestamp"]])
-            for mention in message.mentions:
+            if message["parent"]:
+                message_reference_rel.append(
+                    [message["id"], message["parent"], "IS_CHILD_OF"]
+                )
+            for mention in message["mentions"]:
+                if not any(u[0] == mention for u in users):
+                    users.append([mention, "Deleted User"])
                 message_mention_rel.append(
                     [message["id"], mention, "MENTIONED"]
                 )
@@ -75,19 +79,21 @@ def generate_csvs_from_json():
                     }
                 """ 
                 for user in message["reactions"][emoji]:
-                    uuid = hash_to_uuid(message["author_id"], user, emoji)
+                    if not any(u[0] == user for u in users):
+                        users.append([user, "Deleted User"])
                     reactions.append(
                         [
-                            uuid,
+                            count,
                             emoji
                         ]
                     )
                     message_reaction_rel.append(
-                        [message["id"], uuid, "HAS_REACTION"]
+                        [message["id"], count, "HAS_REACTION"]
                     )
                     user_reaction_rel.append(
-                        [user, uuid, "REACTED"]
+                        [user, count, "REACTED"]
                     )
+                    count += 1
                     
 
     # Write data to CSVs
@@ -117,6 +123,12 @@ def generate_csvs_from_json():
         writer = csv.writer(f)
         writer.writerow([":START_ID", ":END_ID", ":TYPE"])
         writer.writerows(user_message_rel)
+    with open(
+        "local_data/csvs/message_reference_rel.csv", "w", newline="", encoding="utf-8"
+    ) as f:
+        writer = csv.writer(f)
+        writer.writerow([":START_ID", ":END_ID", ":TYPE"])
+        writer.writerows(message_reference_rel)
 
     with open(
         "local_data/csvs/message_channel_rel.csv", "w", newline="", encoding="utf-8"

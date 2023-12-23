@@ -63,8 +63,12 @@ kubectl exec -n argus argus-neo4j-0 `
     --nodes=User=/import/files-1/users.csv `
     --nodes=Channel=/import/files-1/channels.csv `
     --nodes=Message=/import/files-1/messages.csv `
+    --nodes=Reaction=/import/files-1/reactions.csv `
     --relationships=/import/files-1/message_channel_rel.csv `
-    --relationships=/import/files-1/user_message_rel.csv neo4j `
+    --relationships=/import/files-1/user_message_rel.csv `
+    --relationships=/import/files-1/user_reaction_rel.csv `
+    --relationships=/import/files-1/message_reaction_rel.csv `
+    --relationships=/import/files-1/message_mention_rel.csv `
     --overwrite-destination `
     --multiline-fields=true
 

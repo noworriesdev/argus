@@ -5,3 +5,4 @@ pyodbc
 apache-airflow[postgres]
 python-dotenv
 psycopg2-binary
+spotipy
